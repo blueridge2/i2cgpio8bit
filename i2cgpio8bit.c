@@ -114,9 +114,10 @@ int main(int argc, char * argv[])
 	{
 		printf("iodirreg0 0x%02X\n", buffer[0]);
 	}
-
+   return 0;
     //
     //now loop through and write 
+    //
     //
     while (1)
     {
