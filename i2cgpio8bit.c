@@ -117,6 +117,8 @@ int main(int argc, char * argv[])
 	unsigned char buffer[60] = {0};
    unsigned char io_connection_con;
    unsigned char io_direction;
+   unsigned char upper_nibble;
+   unsigned char counter;
 
 	
 	//----- OPEN THE I2C BUS -----
@@ -147,7 +149,10 @@ int main(int argc, char * argv[])
 
    io_connection_con = read_byte_from_MCP23008( file_i2c,INTCON, & rc);
    printf("iocon = 0x%02x rc = %d\n",(int)io_connection_con,rc);
-
+   //
+   //1 =  Pin is configured as an input.
+   //0=  Pin is configured as an output.
+   //io pins 8-4 are outputs.
    rc = writebyte_to_MCP23008(file_i2c,IODIR, 0x0f);
    io_direction = read_byte_from_MCP23008( file_i2c,IODIR, & rc);
    printf("iodir = 0x%02x rc = %d\n",(int)io_direction,rc);
@@ -155,94 +160,17 @@ int main(int argc, char * argv[])
 
 
 
-
-   return -1;
-#if 0      
-   length = 1;			//<<< Number of bytes to write
-   buffer[0] = INTCON;  //write 0's to the upper 4 bits making the outputs.
-	if (write(file_i2c, buffer, length) != length)			
-   {
-	   /* ERROR HANDLING: i2c transaction failed */
-		printf("Failed to write to the i2c bus.\n");
-	}
- 	//read the io direction register, this just read from the previously written address
-	length = 1;			//<<< Number of bytes to read
-	if (read(file_i2c, buffer, length) != length)
-   {
-      //read() returns the number of bytes actually read,
-      // if it doesn't match then an error occurred (e.g. no response from the device)
-      //ERROR HANDLING: i2c transaction failed
-		printf("Failed to read from the i2c bus.\n");
-      return -1;
-	}
-	else
-	{
-	   printf("iocon 0x%02X\n", buffer[0]);
-	}
-   #endif
-
-	//next
-   //make half the bits outputs.
-	buffer[0] = IODIR;  //write 0's to the upper 4 bits making the outputs.
-	buffer[1] = 0x0f;  //	
-	length = 2;			//<<< Number of bytes to write
-    //write() returns the number of bytes actually written,
-    //if it doesn't match then an error occurred (e.g. no response from the device)
-	if (write(file_i2c, buffer, length) != length)
-    {
-		/* ERROR HANDLING: i2c transaction failed */
-		printf("Failed to write to the i2c bus.\n");
-        return -1;
-	}
-    //now read the IODIR register.  This takes a 1 byte write to write the address
-    //into the address into the i2c device so it can be read.
-	length = 1;			//<<< Number of bytes to write
-	if (write(file_i2c, buffer, length) != length)			
-   {
-	   /* ERROR HANDLING: i2c transaction failed */
-		printf("Failed to write to the i2c bus.\n");
-	}
- 	//read the io direction register, this just read from the previously written address
-	length = 1;			//<<< Number of bytes to read
-	if (read(file_i2c, buffer, length) != length)
-   {
-      //read() returns the number of bytes actually read,
-      // if it doesn't match then an error occurred (e.g. no response from the device)
-      //ERROR HANDLING: i2c transaction failed
-		printf("Failed to read from the i2c bus.\n");
-      return -1;
-	}
-	else
-	{
-	   printf("iodirreg0 0x%02X\n", buffer[0]);
-	}
-   return 0;
-    //
-    //now loop through and write 
-    //
-    //
+   counter = 0;
+  
     while (1)
-    {
-#if 0
-        buffer[0] =  GPIO ;  //set the internal address of the register of the GPIO address expander
-        if (buffer[1])     //if the buffer is true.
-        {
-	        buffer[1] = 0x00;  //making them an output.
-        }
-        else
-        {
-	        buffer[1] = 0xf0;  //write the upper nibble
-        }
+    {   upper_nibble = counter<<4;
+        rc = writebyte_to_MCP23008(file_i2c,GPIO, upper_nibble);
+        printf("sleeping counter= 0x%x\n",counter &0xf);
+        sleep(1);
+        counter +=1;
+
        
-	    length = 2;			//<<< Number of bytes to write
-        if (write(file_i2c, buffer, length) != length)			
-        {
-		    /* ERROR HANDLING: i2c transaction failed */
-		    printf("Failed to write to the i2c bus.\n");
-	    }
-        printf("sleeping\n");
-        sleep(4);
-#endif         
+        
     }
 
 
