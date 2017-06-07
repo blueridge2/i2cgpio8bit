@@ -11,6 +11,7 @@
 #include <fcntl.h>				//Needed for I2C port
 #include <sys/ioctl.h>			//Needed for I2C port
 #include <linux/i2c-dev.h>		//Needed for I2C port
+#include <time.h>
 #include "i2cgpio8bit.h"
 //
 //this will read a byte from the gpio register the mpc230008
@@ -94,6 +95,7 @@ int writebyte_to_MCP23008(int file_i2c,unsigned char register_address, unsigned 
    int length;
    int bytes_written;
    unsigned char buffer[2];
+   struct timespec time_structure;
    
    //make half the bits outputs.
 	buffer[0] = register_address;  //write 0's to the upper 4 bits making the outputs.
@@ -119,6 +121,8 @@ int main(int argc, char * argv[])
    unsigned char io_direction;
    unsigned char upper_nibble;
    unsigned char counter;
+   int milliseconds;
+   struct timespec ts;
 
 	
 	//----- OPEN THE I2C BUS -----
@@ -160,15 +164,23 @@ int main(int argc, char * argv[])
 
 
 
-   counter = 0;
-  
-    while (1)
-    {   upper_nibble = counter<<4;
-        rc = writebyte_to_MCP23008(file_i2c,GPIO, upper_nibble);
-        printf("sleeping counter= 0x%x\n",counter &0xf);
-        sleep(1);
-        counter +=1;
-
+   counter = 1;
+   milliseconds = 250;
+   ts.tv_sec = milliseconds / 1000;
+   ts.tv_nsec = ( milliseconds % 1000) * 1000000;
+   
+   while (1)
+   {   
+      upper_nibble = counter<<4;
+      rc = writebyte_to_MCP23008(file_i2c,GPIO, upper_nibble);
+      printf("sleeping counter= 0x%x\n",counter &0xf);
+      sleep(.5);
+      nanosleep(&ts, NULL); 
+      counter +=1;
+      //counter =counter <<1;
+      //if ( counter == 0x10 ){
+      //   counter = 0x01;
+      // }
        
         
     }
