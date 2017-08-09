@@ -15,7 +15,10 @@ typedef union _buffer {
         short i;
         unsigned char tr_buffer[2];
     } Buffer;
-
+float celcius_to_farenheit(float temperature)
+{
+    return temperature*(9.0/5.1) +32.0 ;
+}
 float temperture_to_celcius(unsigned short short_temperature)
 {
     float temperature_in_celcius;
@@ -72,32 +75,40 @@ short readtemp(int file_i2c, unsigned char deviceRegister, unsigned int *rc)
 //
 //this will write byte to the gpio register of the MPC230008
 //
-#if 0
+
 
 
 //writebyte
 //routine will write a byte to the i2c port.
-int writebyte_to_MCP23008(int file_i2c,unsigned char register_address, unsigned char data){
-   int length;
-   int bytes_written;
-   unsigned char buffer[2];
-   struct timespec time_structure;
-   
-   //make half the bits outputs.
-	buffer[0] = register_address;  //write 0's to the upper 4 bits making the outputs.
-	buffer[1] = data;  //	
-	length = 2;			//<<< Number of bytes to write
-   //write() returns the number of bytes actually written,
-    //if it doesn't match then an error occurred (e.g. no response from the device)
-	if ( (bytes_written = (write(file_i2c, buffer, length) )) != length)
-   {
-		/* ERROR HANDLING: i2c transaction failed */
+int writeshort_to_MCP9808(int file_i2c,unsigned char deviceRegister, unsigned short data){
+    int length;
+    int bytes_written;
+    unsigned char buffer[2];
+
+    length = 1;
+    buffer[0] = deviceRegister;
+    // write the register to be written to the pointer register.
+    if (write(file_i2c, buffer, length) != length)			
+    {
 		printf("Failed to write to the i2c bus.\n");
-      return -1;
+        return -1;
+
 	}
-   return bytes_written;
+    length = 2;
+    buffer[0]=(data>>8) & 0xff;
+    buffer[1]=data & 0xff ;
+    if (write(file_i2c, buffer, length) != length)			
+    {
+		printf("Failed to write to the i2c bus.\n");
+        return -1;
+
+	}
+    return 0;
+
 }
-#endif
+
+   
+
 int main(int argc, char * argv[])
 {
 	int file_i2c;
@@ -139,7 +150,7 @@ int main(int argc, char * argv[])
     //convert the temperature to a floating point number.
     temperature_in_celcuis =  temperture_to_celcius(temperature);
  
-    printf("temp = %f\n",temperature_in_celcuis );
+    printf("temperture = %f degrees C or %f degrees F\n",temperature_in_celcuis,celcius_to_farenheit(temperature_in_celcuis )  );
 
 }
 
