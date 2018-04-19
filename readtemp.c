@@ -150,7 +150,7 @@ int main(int argc, char * argv[])
     //convert the temperature to a floating point number.
     temperature_in_celcuis =  temperture_to_celcius(temperature);
  
-    printf("temperture = %f degrees C or %f degrees F\n",temperature_in_celcuis,celcius_to_farenheit(temperature_in_celcuis )  );
+    printf("temperture = %3.1f degrees C or %3.1f degrees F\n",temperature_in_celcuis,celcius_to_farenheit(temperature_in_celcuis )  );
 
 }
 

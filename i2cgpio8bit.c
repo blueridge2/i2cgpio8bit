@@ -162,10 +162,8 @@ int main(int argc, char * argv[])
    printf("iodir = 0x%02x rc = %d\n",(int)io_direction,rc);
 
 
-
-
    counter = 1;
-   milliseconds = 250;
+   milliseconds = 5;
    ts.tv_sec = milliseconds / 1000;
    ts.tv_nsec = ( milliseconds % 1000) * 1000000;
    
@@ -173,7 +171,7 @@ int main(int argc, char * argv[])
    {   
       upper_nibble = counter<<4;
       rc = writebyte_to_MCP23008(file_i2c,GPIO, upper_nibble);
-      printf("sleeping counter= 0x%x\n",counter &0xf);
+      //printf("sleeping counter= 0x%x\n",counter &0xf);
       sleep(.5);
       nanosleep(&ts, NULL); 
       counter +=1;

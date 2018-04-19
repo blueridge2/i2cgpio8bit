@@ -165,7 +165,7 @@ int main(int argc, char * argv[])
 
 
    counter = 1;
-   milliseconds = 250;
+   milliseconds = 500;
    ts.tv_sec = milliseconds / 1000;
    ts.tv_nsec = ( milliseconds % 1000) * 1000000;
    rc = writebyte_to_MCP23008(file_i2c,GPIO, 0);
