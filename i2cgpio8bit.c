@@ -19,6 +19,8 @@
 //
 int readgpio(int file_i2c, unsigned char deviceRegister, unsigned char *gpioByte)
 {
+    // functioni will read the gpio from the device
+    //
     unsigned char buffer[4];
     unsigned length = 1;
     buffer[0] = deviceRegister;
