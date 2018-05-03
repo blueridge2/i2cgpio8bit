@@ -13,5 +13,5 @@ read_ds3231: read_ds3231.c read_ds3231.h
 
 
 clean:
-	rm -rf  i2cgpio8bit i2cledsoff *.o
+	rm -rf  i2cgpio8bit i2cledsoff readtemp read_ds3231 *.o
 
