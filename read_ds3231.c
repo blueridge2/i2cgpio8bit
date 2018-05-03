@@ -12,7 +12,7 @@
 #include <time.h>
 #include "read_ds3231.h"
 
-short swap_short(a)
+short swap_short(unsigned short a)
 {
     return ((a&0xff00)>>8) | ((a &0xff)<<8);
 }
