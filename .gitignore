@@ -1,3 +1,5 @@
 i2cgpio8bit 
 readtemp
+i2cledsoff
+read_ds3231
 *.swp
