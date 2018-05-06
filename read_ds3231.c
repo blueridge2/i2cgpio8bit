@@ -19,7 +19,7 @@ short swap_short(unsigned short a)
 //
 //read 6 bytes from ds3231 rtc
 //
-short readtemp(int file_i2c, unsigned char *time, unsigned char deviceRegister )
+short read_time(int file_i2c, unsigned char *time, unsigned char deviceRegister )
 {
     unsigned char buffer[2];
     unsigned length = 1;
@@ -137,7 +137,7 @@ int main(int argc, char * argv[])
    // read the time.
    //
    //now read the byes
-    rc = readtemp(file_i2c,  time , 0);
+    rc = read_time(file_i2c,  time , 0);
     //if 12_24 is set then it is a 12 hour clock
     //if 12_24 is not set, then it a 24 hour clock
     ampm[0] = 0;
