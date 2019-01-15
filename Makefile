@@ -17,5 +17,5 @@ read_adxl1326: read_adxl1326.c read_adxl1326.h
 
 
 clean:
-	rm -rf  i2cgpio8bit i2cledsoff readtemp read_ds3231 *.o
+	rm -rf  i2cgpio8bit i2cledsoff readtemp read_ds3231  read_adxl1326 *.o
 

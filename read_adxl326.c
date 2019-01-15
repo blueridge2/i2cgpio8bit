@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>			//Needed for I2C port
 #include <linux/i2c-dev.h>		//Needed for I2C port
 #include <time.h>
+#include <wiringPi.h>
 #include "read_adxl236.h"
 
 #define VOLTS_PER_BIT (6.144/(float) 0x7fff)
@@ -20,7 +21,65 @@ static inline short swap_short(unsigned short a)
 }
 //
 //
+short read_hi_threshold(int file_i2c)
+    //
+    //This routine will read the hi threshold register.
+{
+    unsigned char buffer[3];
+    unsigned length = 1;
+    unsigned short base;
+    unsigned short ret_value;
+
+    buffer[0] = HI_THRESHOLD ; // the index register 0, config register.
+    
+	if (write(file_i2c, buffer, length) != length)			
+    {
+		printf("Failed to write to the i2c bus.\n");
+        return -1;
+
+    }
+    length = 2;
+    if (read(file_i2c, buffer, 2) != length)
+    {
+            printf("Failed to read the i2c");
+            return -1;
+    }            
+    ret_value = swap_short(*( ( signed short *) buffer) );
+
+    return ret_value;
+}
+
 //
+//
+
+short read_lo_threshold(int file_i2c)
+    //
+    //This routine will lo threshold register
+{
+    unsigned char buffer[3];
+    unsigned length = 1;
+    unsigned short base;
+    unsigned short ret_value;
+
+    buffer[0] = LO_THRESHOLD ; // the index register 0, config register.
+    
+	if (write(file_i2c, buffer, length) != length)			
+    {
+		printf("Failed to write to the i2c bus.\n");
+        return -1;
+
+    }
+    length = 2;
+    if (read(file_i2c, buffer, 2) != length)
+    {
+            printf("Failed to read the i2c");
+            return -1;
+    }            
+    ret_value = swap_short(*( ( signed short *) buffer) );
+
+    return ret_value;
+}
+
 short read_config_register(int file_i2c)
     //
     //This routine will read the config register.
@@ -48,6 +107,50 @@ short read_config_register(int file_i2c)
 
     return ret_value;
 }
+///
+//
+short write_lo_threshold(int file_i2c, short value)
+    //
+    //This routine starts a conversion, 
+{
+    unsigned char buffer[3];
+    unsigned length = 3;
+
+    buffer[0] = LO_THRESHOLD ; // the index register 0, config register.
+    buffer[1] = value >> 8 & 0xff;  // the msb gets transmitted first
+    buffer[2] = value & 0xff ;
+    
+	if (write(file_i2c, buffer, length) != length)			
+    {
+		printf("Failed to write to the i2c bus.\n");
+        return -1;
+
+	}
+    return 0;
+    
+}
+//
+short write_hi_threshold(int file_i2c, short value)
+    //
+    //This writes the hi threshold 
+{
+    unsigned char buffer[3];
+    unsigned length = 3;
+
+    buffer[0] = HI_THRESHOLD ; // the index register 0, config register.
+    buffer[1] = value >> 8 & 0xff;  // the msb gets transmitted first
+    buffer[2] = value & 0xff ;
+    
+	if (write(file_i2c, buffer, length) != length)			
+    {
+		printf("Failed to write to the i2c bus.\n");
+        return -1;
+
+	}
+    return 0;
+    
+}
+
 short start_conversion(int file_i2c, int channel)
     //
     //This routine starts a conversion, 
@@ -58,7 +161,7 @@ short start_conversion(int file_i2c, int channel)
 
     buffer[0] = CONFIG_REG ; // the index register 0, config register.
     buffer[1] = 0x81;       // this goes out first to the most sigficant bytes of the conversion register.
-    buffer[2] = 0x83 ;
+    buffer[2] = 0x80 ;
     channel = channel & 3 | 0x4;  // do not used differential inputs
     //printf(" channel = %04x\n", buffer[1]);
 
@@ -74,7 +177,18 @@ short start_conversion(int file_i2c, int channel)
     return 0;
     
 }
+void wait_for_ready(int file_i2c)
+{
+    unsigned short config_register = 0;
 
+    config_register = read_config_register(file_i2c);
+    //printf("config reg = 0x%02x\n", config_register);
+    while ((config_register & 0x8000) == 0 )
+    {
+        config_register = read_config_register(file_i2c) & 0x8000;
+        //printf("config reg = 0x%02x\n", config_register);
+    }
+}
 short read_conversion(int file_i2c)
     //
     //This file reads a result of a conversion from the analog to digital conversion
@@ -114,8 +228,10 @@ int main(int argc, char * argv[])
     int channel;
 
 
-	
+	//  set up wiring pi
+    wiringPiSetup();
 	//----- OPEN THE I2C BUS -----
+    
 	char *filename = (char*)"/dev/i2c-1";
     int addr = I2C_ADXL_ADDRESS  ;          //<<<<<The I2C address of the slave
 
@@ -135,21 +251,34 @@ int main(int argc, char * argv[])
    //
    // read acceleration.
    //
+    write_hi_threshold(file_i2c, 0x8000);
+    write_lo_threshold(file_i2c, 0x0000);
+
+    config_register = read_lo_threshold(file_i2c);
+    printf("lo_threshold = 0x%02x\n", config_register);
+    config_register = read_hi_threshold(file_i2c);
+    printf("hi_threshold = 0x%02x\n", config_register);
     config_register = read_config_register(file_i2c);
     printf("config reg = 0x%02x\n", config_register);
-    for (channel=0; channel <3; channel++)
+    start_conversion(file_i2c, channel);
+
+    config_register = read_config_register(file_i2c);
+    printf("config reg = 0x%02x\n", config_register);
+    while(1)
     {
-        start_conversion(file_i2c, channel);
+        for (channel=0; channel <3; channel++)
+        {
+            start_conversion(file_i2c, channel);
 
-        //config_register = read_config_register(file_i2c);
-        //printf("config reg = 0x%02x\n", config_register);
-   
-        sleep(1);
-        //config_register = read_config_register(file_i2c);
-        //printf("config reg = 0x%02x\n", config_register);
+            //config_register = read_config_register(file_i2c);
+            //printf("config reg = 0x%02x\n", config_register);
+            wait_for_ready(file_i2c); 
+            //config_register = read_config_register(file_i2c);
+            //printf("config reg = 0x%02x\n", config_register);
 
-        conversion = read_conversion(file_i2c);
-        printf("chan = %d value = %f \n",channel, (float) conversion * VOLTS_PER_BIT  );
+            conversion = read_conversion(file_i2c);
+            printf("chan = %d value = %f \n",channel, (float) conversion * VOLTS_PER_BIT  );
+        }
     }
 
 }
