@@ -11,7 +11,7 @@
 #include <linux/i2c-dev.h>		//Needed for I2C port
 #include <time.h>
 #include <wiringPi.h>
-#include "read_adxl236.h"
+#include "read_adxl326.h"
 
 #define VOLTS_PER_BIT (6.144/(float) 0x7fff)
 
@@ -180,14 +180,22 @@ short start_conversion(int file_i2c, int channel)
 void wait_for_ready(int file_i2c)
 {
     unsigned short config_register = 0;
+    unsigned char gpio_21;
 
     config_register = read_config_register(file_i2c);
     //printf("config reg = 0x%02x\n", config_register);
+    gpio_21 = digitalRead(21);
     while ((config_register & 0x8000) == 0 )
     {
         config_register = read_config_register(file_i2c) & 0x8000;
         //printf("config reg = 0x%02x\n", config_register);
+        gpio_21 = digitalRead(21);
+        printf("gpio pin 21 = %x\n",gpio_21);
+
+
     }
+    gpio_21 = digitalRead(5);
+    printf("gpio pin 21 = %x\n",gpio_21);
 }
 short read_conversion(int file_i2c)
     //
@@ -230,6 +238,8 @@ int main(int argc, char * argv[])
 
 	//  set up wiring pi
     wiringPiSetup();
+    pinMode(22, INPUT);
+    
 	//----- OPEN THE I2C BUS -----
     
 	char *filename = (char*)"/dev/i2c-1";
