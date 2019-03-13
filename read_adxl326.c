@@ -14,6 +14,9 @@
 #include "read_adxl326.h"
 
 #define VOLTS_PER_BIT (6.144/(float) 0x7fff)
+#define CHANNEL1_OFFSET  1.650925
+#define CHANNEL2_OFFSET  1.650921
+#define CHANNEL3_OFFSET  1.645534
 
 static inline short swap_short(unsigned short a)
 {
@@ -236,6 +239,15 @@ int main(int argc, char * argv[])
     unsigned short config_register;
     unsigned short conversion;
     int channel;
+    float chan1_voltage = 0;
+    float chan2_voltage = 0;
+    float chan3_voltage = 0;
+    float chan1_zeroed =0;
+    float chan2_zeroed =0;
+    float chan3_zeroed =0;
+    float voltage;
+
+    int count = 0;
 
 
 	//  set up wiring pi
@@ -289,8 +301,36 @@ int main(int argc, char * argv[])
             //printf("config reg = 0x%02x\n", config_register);
 
             conversion = read_conversion(file_i2c);
-            printf("chan = %d value = %f \n",channel, (float) conversion * VOLTS_PER_BIT  );
+            voltage = conversion * VOLTS_PER_BIT;
+            printf("chan = %d value = %f \n",channel, (float) voltage);
+    
+            switch (channel)
+            {
+                case 0:
+                    chan1_voltage += voltage;
+                    chan1_zeroed = voltage-CHANNEL1_OFFSET;
+                    break;
+                case 1:
+                    chan2_voltage += voltage;
+                    chan2_zeroed = voltage-CHANNEL2_OFFSET;
+                    break;
+                case 2:
+                    chan3_voltage += voltage;
+                    chan3_zeroed = voltage-CHANNEL3_OFFSET;
+                    break;
+                default:
+                    printf("error");
+                    return -1;
+            }
         }
+        count ++;
+        printf("average chan1 = %f, chan2=%f, chan3=%f\n", chan1_voltage/(float)count,
+                                                                chan2_voltage/(float)count,
+                                                                chan3_voltage/(float)count);
+        printf("chan1 = %f, chan2=%f, chan3=%f\n\n", chan1_zeroed,
+                                                                chan2_zeroed,
+                                                                chan3_zeroed);
+        sleep(.1);
     }
 
 }
