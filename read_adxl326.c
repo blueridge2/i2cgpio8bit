@@ -184,18 +184,20 @@ void wait_for_ready(int file_i2c)
 
     config_register = read_config_register(file_i2c);
     //printf("config reg = 0x%02x\n", config_register);
-    gpio_21 = digitalRead(21);
-    while ((config_register & 0x8000) == 0 )
+    //gpio_21 = digitalRead(21);
+    //printf("gpio pin 21 = %x\n",gpio_21);
+    //while ((config_register & 0x8000) == 0 )
+    while ((gpio_21 = digitalRead(21)) == 1 )
     {
         config_register = read_config_register(file_i2c) & 0x8000;
         //printf("config reg = 0x%02x\n", config_register);
-        gpio_21 = digitalRead(21);
-        printf("gpio pin 21 = %x\n",gpio_21);
+    //    gpio_21 = digitalRead(21);
+    //    printf("gpio pin 21 = %x\n",gpio_21);
 
 
     }
     gpio_21 = digitalRead(5);
-    printf("gpio pin 21 = %x\n",gpio_21);
+    // printf("gpio pin 21 = %x\n",gpio_21);
 }
 short read_conversion(int file_i2c)
     //
