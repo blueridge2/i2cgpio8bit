@@ -7,16 +7,19 @@
 #include <unistd.h>				//Needed for I2C port
 #include <fcntl.h>              //Needed for I2C port
 #include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <sys/ioctl.h>			//Needed for I2C port
 #include <linux/i2c-dev.h>		//Needed for I2C port
 #include <time.h>
+#include <errno.h>
 #include <wiringPi.h>
 #include "read_adxl326.h"
 
 #define VOLTS_PER_BIT (6.144/(float) 0x7fff)
 #define CHANNEL1_OFFSET  1.650925
-#define CHANNEL2_OFFSET  1.650921
-#define CHANNEL3_OFFSET  1.645534
+#define CHANNEL2_OFFSET  1.650200
+#define CHANNEL3_OFFSET  1.645332
 
 static inline short swap_short(unsigned short a)
 {
@@ -246,10 +249,55 @@ int main(int argc, char * argv[])
     float chan2_zeroed =0;
     float chan3_zeroed =0;
     float voltage;
-
     int count = 0;
 
+    int cflag = 0;
+    int dflag = 0;
+    char *dvalue = NULL;
+    char *pend;
+    float delay_float;
+    int index;
+    int c;
+    
+ opterr = 0;
 
+
+  while ((c = getopt (argc, argv, "cd:")) != -1)
+    switch (c)
+    {
+      case 'c':
+        cflag = 1;
+        break;
+      case 'd':
+        dvalue = optarg;
+        break;
+      case '?':
+        if (optopt == 'c')
+          fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+        else if (isprint (optopt))
+          fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+        else
+          fprintf (stderr,
+                   "Unknown option character `\\x%x'.\n",
+                   optopt);
+        return 1;
+      default:
+        ;
+    }
+    if (dvalue == NULL)
+    {
+        fprintf(stderr,"no value specified for -d\n");
+        exit(-1);
+    }
+    printf("d=%s\n",dvalue); 
+    errno = 0;
+    delay_float = strtod(dvalue, &pend);
+    if (errno == ERANGE)
+    {
+        fprintf(stderr,"%s is an illegal floating\n",dvalue);
+        exit(ERANGE);
+    }
+    printf("d=%f\n",delay_float); 
 	//  set up wiring pi
     wiringPiSetup();
     pinMode(22, INPUT);
@@ -330,7 +378,7 @@ int main(int argc, char * argv[])
         printf("chan1 = %f, chan2=%f, chan3=%f\n\n", chan1_zeroed,
                                                                 chan2_zeroed,
                                                                 chan3_zeroed);
-        sleep(.1);
+        sleep(delay_float);
     }
 
 }
