@@ -16,10 +16,10 @@
 #include <wiringPi.h>
 #include "read_adxl326.h"
 
-#define VOLTS_PER_BIT (6.144/(float) 0x7fff)
-#define CHANNEL1_OFFSET  1.650925
-#define CHANNEL2_OFFSET  1.650200
-#define CHANNEL3_OFFSET  1.645332
+#define VOLTS_PER_BIT (4.096/(float) 0x7fff)
+#define CHANNEL1_OFFSET  0
+#define CHANNEL2_OFFSET  0
+#define CHANNEL3_OFFSET  0
 
 static inline short swap_short(unsigned short a)
 {
@@ -166,7 +166,9 @@ short start_conversion(int file_i2c, int channel)
     unsigned short base;
 
     buffer[0] = CONFIG_REG ; // the index register 0, config register.
-    buffer[1] = 0x81;       // this goes out first to the most sigficant bytes of the conversion register.
+    buffer[1] = 0x83;       // this goes out first to the most sigficant bytes of the conversion register.
+                            // start, conversion, bit 15, pga bits = 1, bits(11-9) full volt=4.096, 
+                            // bit 8 = single shot
     buffer[2] = 0x80 ;
     channel = channel & 3 | 0x4;  // do not used differential inputs
     //printf(" channel = %04x\n", buffer[1]);
