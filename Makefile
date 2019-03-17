@@ -12,7 +12,7 @@ read_ds3231: read_ds3231.c read_ds3231.h
 	gcc -g -o read_ds3231  read_ds3231.c
 
 read_adxl326: read_adxl326.c read_adxl326.h
-	gcc -g -lwiringPi -o read_adxl326   read_adxl326.c
+	gcc -g -lwiringPi -lm -o read_adxl326   read_adxl326.c
 
 
 clean:

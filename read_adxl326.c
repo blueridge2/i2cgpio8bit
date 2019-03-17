@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <math.h>
 #include <sys/ioctl.h>			//Needed for I2C port
 #include <linux/i2c-dev.h>		//Needed for I2C port
 #include <time.h>
@@ -260,6 +261,10 @@ int main(int argc, char * argv[])
     float delay_float;
     int index;
     int c;
+    double int_part;
+    int fractional_part_in_nano_seconds;
+    struct timespec time, remaining;
+
     
  opterr = 0;
 
@@ -300,6 +305,11 @@ int main(int argc, char * argv[])
         exit(ERANGE);
     }
     printf("d=%f\n",delay_float); 
+    fractional_part_in_nano_seconds = (int)round(modf(delay_float, &int_part) * 1000000000.0);
+    printf("int part = %d, fractonal part =%d nanoseconds\n",int_part, fractional_part_in_nano_seconds);
+    time.tv_sec = int_part;
+    time.tv_nsec = fractional_part_in_nano_seconds;
+    
 	//  set up wiring pi
     wiringPiSetup();
     pinMode(22, INPUT);
@@ -380,7 +390,11 @@ int main(int argc, char * argv[])
         printf("chan1 = %f, chan2=%f, chan3=%f\n\n", chan1_zeroed,
                                                                 chan2_zeroed,
                                                                 chan3_zeroed);
-        sleep(delay_float);
+        if(nanosleep(&time , &remaining) < 0 )   
+        {
+            fprintf(stderr, "Nano sleep system call failed \n");
+            return -1;
+        }
     }
 
 }
