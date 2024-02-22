@@ -8,7 +8,7 @@
 #define M_16G  0.0
 #define ZERO_G 1.65
 #define P_16G  3.3
-#define GEES_PER_VOLT  32.0/3.3
+#define GEES_PER_VOLT  32.0/3.29
 //define the i2c address for the a2d
 #define I2C_ADXL_ADDRESS     0x48
 #define POINTER_REG          0x00

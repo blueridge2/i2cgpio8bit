@@ -8,6 +8,7 @@ for the entire text
     This program reads the adafruit ads1115 a/d converter 4 channel a/d converter
     which is connected to adxl 326 accellerometer
     the data sheet for the ads1115 is here https://cdn-shop.adafruit.com/datasheets/ads1115.pdf
+    This is also dependent on pigpio package located at https://abyz.me.uk/rpi/pigpio/
 */
 
     
@@ -17,6 +18,7 @@ for the entire text
 #include <fcntl.h>              //Needed for I2C port
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
@@ -24,6 +26,7 @@ for the entire text
 #include <linux/i2c-dev.h>		//Needed for I2C port
 #include <time.h>
 #include <errno.h>
+#include <unistd.h>
 #include <pigpio.h>
 
 #include "read_adxl326.h"
@@ -33,6 +36,18 @@ for the entire text
 #define CHANNEL2_OFFSET  0
 #define CHANNEL3_OFFSET  0
 
+sig_atomic_t volatile g_running = 1;  /* in general, global are bad, but here, in this program, it is ok*/
+
+
+void catch_signal(int sig_num)
+{
+    /* re-set the signal handler again to catch_int, for next time */
+    signal(SIGINT, catch_signal);
+    /* and print the message */
+    fprintf(stderr, "control C, exit cleanly\n");
+    g_running = 0;
+    fflush(stderr);
+}
 static inline short swap_short(unsigned short a)
 /** @brief This will inline byte swap a short
 
@@ -266,7 +281,6 @@ short read_conversion(int file_i2c)
     unsigned length = 1;
     buffer[0] = CONVERSION_REG ; // the index register 0, conversion register.
     
-    
 	if (write(file_i2c, buffer, length) != length)			
     {
 		printf("Failed to write to the i2c bus.\n");
@@ -400,7 +414,6 @@ int main(int argc, char * argv[])
     int fractional_part_in_nano_seconds;
     struct timespec time, remaining;
 
-    
     opterr = 0;
     if (gpioInitialise() < 0) return 1;
 
@@ -512,7 +525,11 @@ int main(int argc, char * argv[])
 
     config_register = read_config_register(file_i2c);
     printf("config reg = 0x%02x\n", config_register);
-    while(1)
+
+    /* set the INT (Ctrl-C) signal handler to 'catch_signal so that we can exit cleanly 
+        when control-c is set' */
+    signal(SIGINT, catch_signal);
+    while(g_running)
     {
         for (channel=0; channel <3; channel++)
         {
@@ -558,11 +575,12 @@ int main(int argc, char * argv[])
                                                                 chan3_zeroed);
         if(nanosleep(&time , &remaining) < 0 )   
         {
-            fprintf(stderr, "Nano sleep system call failed \n");
-            return -1;
+            fprintf(stderr, "Nano sleep system call failed. Break\n");
+            break;
         }
     }
-   gpioTerminate();
+    printf("Control C pressed, and exiting cleanly\n");
+    gpioTerminate();
     
 
 }
